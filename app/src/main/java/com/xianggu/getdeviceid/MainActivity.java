@@ -27,6 +27,8 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "DeviceID---->>";
+
+    //存放UUID的文件名
     private static final String saveFileName = "ADMobileDeviceID";
 
     private TextView getDataTv;
@@ -64,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
      * 向Mediastore添加内容
      */
     private void creatUUIDFile() {
-
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DISPLAY_NAME, saveFileName);
         values.put(MediaStore.Images.Media.MIME_TYPE,"image/*");

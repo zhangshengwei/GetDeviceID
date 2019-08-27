@@ -54,13 +54,15 @@ public class MainActivity extends AppCompatActivity {
         uuidResultTv = findViewById(R.id.uuidResult);
 
         getDataTv.setOnClickListener(view -> {
+
+            //判断是否已经存在唯一标识符，并返回标识符内容
             String checkStr = checkUUIDFileByUri();
             if (!TextUtils.isEmpty(checkStr)){
                 Log.d(TAG, "onCreate: checkStr:"+checkStr);
                 uuidResultTv.setText("uuid:"+checkStr);
             }else{
                 Log.d(TAG, "onCreate: 没有监测到相关文件");
-
+                //生成标识符文件
                 insertMediastore();
             }
         });

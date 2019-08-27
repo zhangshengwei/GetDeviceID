@@ -1,32 +1,20 @@
 package com.xianggu.getdeviceid;
 
-import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
-import com.xianggu.getdeviceid.utils.FileUtils;
-
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -34,8 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
@@ -58,12 +44,15 @@ public class MainActivity extends AppCompatActivity {
             //判断是否已经存在唯一标识符，并返回标识符内容
             String checkStr = checkUUIDFileByUri();
             if (!TextUtils.isEmpty(checkStr)){
+
                 Log.d(TAG, "onCreate: checkStr:"+checkStr);
                 uuidResultTv.setText("uuid:"+checkStr);
+                // TODO: 2019-08-27 可能需要在这里做一些数据上报等工作 
             }else{
+                
                 Log.d(TAG, "onCreate: 没有监测到相关文件");
                 //生成标识符文件
-                insertMediastore();
+                creatUUIDFile();
             }
         });
 
@@ -74,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
      * 在媒体文件中 生成fileName文件
      * 向Mediastore添加内容
      */
-    private void insertMediastore() {
+    private void creatUUIDFile() {
 
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DISPLAY_NAME, saveFileName);
@@ -121,37 +110,37 @@ public class MainActivity extends AppCompatActivity {
         };
         //查询
         ContentResolver contentResolver = this.getContentResolver();
-        Cursor mCursor = contentResolver.query(mImageUri, projection, null, null, null);
+
+        // 添加筛选条件
+        String selection = MediaStore.Images.Media.DISPLAY_NAME + "=" + "'" + saveFileName + "'";
+        Cursor mCursor = contentResolver.query(mImageUri, projection, selection, null, null);
 
         String getSaveContent = "";
         if (mCursor != null) {
             while (mCursor.moveToNext()) {
-                int fileNameIndex = mCursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+
                 int fileIdIndex = mCursor.getColumnIndex(MediaStore.Images.Media._ID);
+                String thumbPath = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
+                        .appendPath(String.valueOf(mCursor.getInt(fileIdIndex))).build().toString();
+                Uri fileUri = Uri.parse(thumbPath);
+                try {
+                    ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(fileUri,"r",null);
+                    FileInputStream inputStream = new FileInputStream(fielDescriptor.getFileDescriptor());
+                    getSaveContent = inputStreamToString(inputStream);
 
-                String fileName = String.valueOf(mCursor.getString(fileNameIndex));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
 
-                if (saveFileName.equals(fileName)){
-                    String thumbPath = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
-                            .appendPath(String.valueOf(mCursor.getInt(fileIdIndex))).build().toString();
-                    Uri fileUri = Uri.parse(thumbPath);
-                    try {
-                        ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(fileUri,"r",null);
-                        FileInputStream inputStream = new FileInputStream(fielDescriptor.getFileDescriptor());
-                        getSaveContent = inputStreamToString(inputStream);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                //只有在得到的唯一标识符不为空的情况下才结束循环，否则一直循环
+                if (!TextUtils.isEmpty(getSaveContent)){
                     break;
                 }
             }
             mCursor.close();
-            if (!TextUtils.isEmpty(getSaveContent)){
-                return getSaveContent;
-            }
 
         }
-
+        
         return getSaveContent;
     }
 

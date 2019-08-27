@@ -1,29 +1,17 @@
 package com.xianggu.getdeviceid;
 
-import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
-
-import com.xianggu.getdeviceid.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,37 +21,37 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+/**
+ * @Description:
+ * @Author: xianggu
+ * @CreateDate: 2019-08-27 14:15
+ */
+public class SecondActivity extends AppCompatActivity {
 
-    private static final String TAG = "DeviceID---->>";
+    private static final String TAG = "----->>SecondAct";
+    private String uuidStr = "null";
     private static final String saveFileName = "ADMobileDeviceID";
 
-    private TextView getDataTv;
-    private TextView uuidResultTv;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_second);
 
-        getDataTv = findViewById(R.id.getData);
-        uuidResultTv = findViewById(R.id.uuidResult);
+        uuidStr = UUID.randomUUID().toString();
 
-        getDataTv.setOnClickListener(view -> {
-            String checkStr = checkUUIDFileByUri();
-            if (!TextUtils.isEmpty(checkStr)){
-                Log.d(TAG, "onCreate: checkStr:"+checkStr);
-                uuidResultTv.setText("uuid:"+checkStr);
-            }else{
-                Log.d(TAG, "onCreate: 没有监测到相关文件");
 
-                insertMediastore();
-            }
-        });
+        String checkStr = checkUUIDFileByUri();
+        if (!TextUtils.isEmpty(checkStr)){
+            Log.d(TAG, "onCreate: checkStr:"+checkStr);
+        }else{
+
+            insertMediastore();
+            Log.d(TAG, "onCreate: uuidStr:"+uuidStr);
+        }
 
 
     }
@@ -79,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         values.put(MediaStore.Images.Media.MIME_TYPE,"image/*");
         // TODO: 2019-08-27 IS_PENDING = 1表示对应的item还没准备好
         values.put(MediaStore.Images.Media.IS_PENDING,1);
+//        values.put(MediaStore.Images.Media.RELATIVE_PATH,"");
 
         ContentResolver resolver = this.getContentResolver();
         Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
@@ -91,13 +80,13 @@ public class MainActivity extends AppCompatActivity {
             FileOutputStream outputStream = new FileOutputStream(fielDescriptor.getFileDescriptor());
             try {
                 //讲UUID写入到文件中
-                String uuidStr = UUID.randomUUID().toString();
                 outputStream.write(uuidStr.getBytes());
                 outputStream.close();
-                Log.d(TAG, "写入 uuidStr:"+uuidStr);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+
             values.clear();
             values.put(MediaStore.Images.Media.IS_PENDING, 0);          //设置为0
             resolver.update(uri,values,null,null);
@@ -119,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
         };
         //查询
         ContentResolver contentResolver = this.getContentResolver();
-        Cursor mCursor = contentResolver.query(mImageUri, projection, null, null, null);
+        Cursor mCursor = contentResolver.query(
+                mImageUri, projection, null, null,
+                null);
 
         String getSaveContent = "";
         if (mCursor != null) {
@@ -128,18 +119,29 @@ public class MainActivity extends AppCompatActivity {
                 int fileIdIndex = mCursor.getColumnIndex(MediaStore.Images.Media._ID);
 
                 String fileName = String.valueOf(mCursor.getString(fileNameIndex));
+                Log.d(TAG, "checkUUIDFileByUri: fileName:"+fileName);
 
                 if (saveFileName.equals(fileName)){
+
+
                     String thumbPath = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.buildUpon()
                             .appendPath(String.valueOf(mCursor.getInt(fileIdIndex))).build().toString();
+
+                    Log.d(TAG, "checkUUIDFileByUri: path:"+thumbPath);
+
                     Uri fileUri = Uri.parse(thumbPath);
+
                     try {
                         ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(fileUri,"r",null);
                         FileInputStream inputStream = new FileInputStream(fielDescriptor.getFileDescriptor());
+
                         getSaveContent = inputStreamToString(inputStream);
+
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
+
+
                     break;
                 }
             }
@@ -214,4 +216,3 @@ public class MainActivity extends AppCompatActivity {
         return sb.toString();
     }
 }
-

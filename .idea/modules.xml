@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/GetDeviceID2.iml" filepath="$PROJECT_DIR$/GetDeviceID2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/GetDeviceID.iml" filepath="$PROJECT_DIR$/GetDeviceID.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/GetDeviceID2-app.iml" filepath="$PROJECT_DIR$/app/GetDeviceID2-app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>

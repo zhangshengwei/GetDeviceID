@@ -8,35 +8,35 @@
     tools:context=".MainActivity"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="设备标识符"
-        android:textSize="16sp"
-        android:textColor="#ff0000"
-        android:layout_gravity="center"/>
-
 
 
     <TextView
-        android:id="@+id/android_id"
+        android:id="@+id/nextAct"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="0000"/>
-
-
-    <TextView
-        android:id="@+id/serial_id"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="0000"/>
-
+        android:layout_marginTop="20dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="toSecondActivity"
+        android:textSize="18sp" />
 
     <TextView
-        android:id="@+id/uuid"
+        android:id="@+id/getData"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="uuid:"/>
+        android:layout_marginTop="20dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="获取数据"
+        android:textSize="18sp" />
 
+    <TextView
+        android:id="@+id/uuidResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="获取结果:"/>
 
 </LinearLayout>

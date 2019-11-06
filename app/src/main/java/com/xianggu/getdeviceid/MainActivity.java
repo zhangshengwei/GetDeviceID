@@ -3,11 +3,9 @@ package com.xianggu.getdeviceid;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -19,10 +17,9 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.TextView;
 
-import com.xianggu.getdeviceid.utils.FileUtils;
+import com.xianggu.getdeviceid.utils.DeviceDataUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,17 +37,21 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "DeviceID---->>";
-    private static final String[] permissions = {Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.CAMERA};
+    private static final String[] permissions = {Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
     private List<String> permissionList = new ArrayList<>();
 
     //存放UUID的文件名
     private static final String saveFileName = "ADMObileDeviceIdFile";
 
     //在低于android Q的版本中，直接通过路径获取
-    private static final String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/" +saveFileName;
+    private static final String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/" + saveFileName;
 
     private TextView getDataTv;
     private TextView uuidResultTv;
+
+    private TextView useMSASolutionTv;
+
+    private TextView getAndroidID, getIMEI, getMAC, idresultTv;
 
     private int deviceVersion = 0;
 
@@ -61,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
 
         getDataTv = findViewById(R.id.getData);
         uuidResultTv = findViewById(R.id.uuidResult);
+        useMSASolutionTv = findViewById(R.id.toMSATv);
+
+        getAndroidID = findViewById(R.id.getAndroidId);
+        getIMEI = findViewById(R.id.getAndroidIMEI);
+        getMAC = findViewById(R.id.getAndroidMAC);
+        idresultTv = findViewById(R.id.idresult);
 
         applyPermission();
 
@@ -68,9 +75,8 @@ public class MainActivity extends AppCompatActivity {
         String[] versionSplit = Build.VERSION.RELEASE.split("\\.");
         deviceVersion = Integer.parseInt(versionSplit[0]);
 
-
+        //生成文件保存在多媒体目录下
         getDataTv.setOnClickListener(view -> {
-
             //判断是否已经存在唯一标识符，并返回标识符内容
             String checkStr = checkUUIDFileByUri();
             if (!TextUtils.isEmpty(checkStr)) {
@@ -82,56 +88,47 @@ public class MainActivity extends AppCompatActivity {
                 uuidResultTv.setText("创建得到的uuid:\n" + checkUUIDFileByUri());
             }
         });
-    }
 
-    /**
-     * 在媒体文件中 生成fileName文件
-     * 向Mediastore添加内容
-     */
-    private void creatUUIDFile() {
+        useMSASolutionTv.setOnClickListener(view -> {
+            startActivity(new Intent(MainActivity.this, MSASolutionActivity.class));
+        });
 
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, saveFileName);
-        values.put(MediaStore.Images.Media.MIME_TYPE,"image/*");
+        // 获取AndroidID
+        getAndroidID.setOnClickListener(view -> {
+            String ANDROID_ID = DeviceDataUtils.getAndroidId(this);
+            idresultTv.setText("获取的AndroidID :" + "\t" + ANDROID_ID);
+        });
 
-        ContentResolver contentResolver = this.getContentResolver();
+        // 获取IMEI
+        getIMEI.setOnClickListener(view -> {
+            String imei = DeviceDataUtils.getAndroidIMEI(this);
 
-        Uri uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values);
-        Log.d(TAG, "creatUUIDFile: Uri:" + uri);
-
-        try {
-            FileOutputStream outputStream = null;
-            //访问 对于单个媒体文件，请使用 openFileDescriptor()。
-            if (deviceVersion>=10) {
-                ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(uri, "w", null);
-                outputStream = new FileOutputStream(fielDescriptor.getFileDescriptor());
-            }else{
-                File file = new File(filePath);
-                outputStream = new FileOutputStream(file);
-                Log.d(TAG, "creatUUIDFile: fileName:"+file.getName() + "    filePath:"+filePath);
+            if (TextUtils.isEmpty(imei)) {
+                idresultTv.setText("获取的IMEI :" + "\t获取失败");
+            } else {
+                idresultTv.setText("获取的IMEI :" + "\t" + imei);
             }
-            try {
-                //讲UUID写入到文件中
-                String uuidStr = UUID.randomUUID().toString();
-                outputStream.write(uuidStr.getBytes());
-                outputStream.close();
-                Log.d(TAG, "写入 uuidStr:"+uuidStr);
-            } catch (IOException e) {
-                e.printStackTrace();
+        });
+
+        // 获取MAC
+        getMAC.setOnClickListener(view -> {
+            String mac = "";
+            mac = DeviceDataUtils.getMacAddress(this);
+            if (TextUtils.isEmpty(mac)) {
+                idresultTv.setText("获取的MAC :" + "\t获取失败");
+            } else {
+                idresultTv.setText("获取的MAC :" + "\t" + mac);
             }
-            contentResolver.update(uri,values,null,null);
-            values.clear();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
 
     /**
      * 检查文件是否存在
+     *
      * @return
      */
-    private String checkUUIDFileByUri(){
+    private String checkUUIDFileByUri() {
 
         String[] projection = {
                 MediaStore.Images.Media.DISPLAY_NAME,
@@ -157,10 +154,10 @@ public class MainActivity extends AppCompatActivity {
 
                 FileInputStream inputStream = null;
                 try {
-                    if (deviceVersion>=10) {
-                        ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(fileUri,"r",null);
+                    if (deviceVersion >= 10) {
+                        ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(fileUri, "r", null);
                         inputStream = new FileInputStream(fielDescriptor.getFileDescriptor());
-                    }else{
+                    } else {
                         File file = new File(filePath);
                         inputStream = new FileInputStream(file);
                     }
@@ -169,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                //只有在得到的唯一标识符不为空的情况下才结束循环，否则一直循环
-                if (!TextUtils.isEmpty(getSaveContent)){
+                //只有在得到的唯一标识符不为空的情况下才结束循环
+                if (!TextUtils.isEmpty(getSaveContent)) {
                     break;
                 }
             }
@@ -181,7 +178,48 @@ public class MainActivity extends AppCompatActivity {
 
 
     /**
+     * 在媒体文件中 生成fileName文件
+     * 向Mediastore添加内容
+     */
+    private void creatUUIDFile() {
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, saveFileName);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+
+        ContentResolver contentResolver = this.getContentResolver();
+
+        Uri uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+        try {
+            FileOutputStream outputStream = null;
+            //访问 对于单个媒体文件，请使用 openFileDescriptor()。
+            if (deviceVersion >= 10) {
+                ParcelFileDescriptor fielDescriptor = contentResolver.openFileDescriptor(uri, "w", null);
+                outputStream = new FileOutputStream(fielDescriptor.getFileDescriptor());
+            } else {
+                File file = new File(filePath);
+                outputStream = new FileOutputStream(file);
+            }
+            try {
+                //讲UUID写入到文件中
+                String uuidStr = UUID.randomUUID().toString();
+                outputStream.write(uuidStr.getBytes());
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            contentResolver.update(uri, values, null, null);
+            values.clear();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
      * 将内容选择编码格式输出
+     *
      * @param inputStream
      * @return
      */
@@ -205,8 +243,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return sb.toString();
     }
-
-
 
     /**
      * 申请权限

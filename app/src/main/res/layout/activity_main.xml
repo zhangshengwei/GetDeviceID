@@ -8,19 +8,6 @@
     tools:context=".MainActivity"
     android:orientation="vertical">
 
-
-
-    <TextView
-        android:id="@+id/nextAct"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:padding="10dp"
-        android:gravity="center"
-        android:background="#5fa554"
-        android:text="toSecondActivity"
-        android:textSize="18sp" />
-
     <TextView
         android:id="@+id/getData"
         android:layout_width="match_parent"
@@ -38,5 +25,60 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="获取结果:"/>
+
+
+    <TextView
+        android:id="@+id/toMSATv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="使用移动安全联盟提供的解决方案(MSA)"
+        android:textSize="18sp" />
+
+
+    <TextView
+        android:id="@+id/getAndroidId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="获取androidID"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/getAndroidIMEI"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="获取IMEI"
+        android:textSize="18sp" />
+
+
+    <TextView
+        android:id="@+id/getAndroidMAC"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:padding="10dp"
+        android:gravity="center"
+        android:background="#5fa554"
+        android:text="获取MAC"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/idresult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:hint="请求结果"/>
+
 
 </LinearLayout>
